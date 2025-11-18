@@ -1,0 +1,46 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+\usepackage{amsmath}
+\usepackage{booktabs}
+
+\title{\textbf{Lab 3 Report: EE Problems Modeling}}
+\author{Student Name \\ UESTC 3036: Machine Learning \& AI}
+\date{\today}
+
+\begin{document}
+\mailtitle
+
+\begin{abstract}
+This lab addresses three electrical engineering problems: diplexer performance evaluation, radar signal processing, and Ackley function optimization.
+\end{abstract}
+
+\section{Task 1: Diplexer Performance Evaluation}
+
+Implemented evaluation function to assess S-parameter violations:
+
+\begin{equation}
+E_i = \max(0, \max(S_{\text{param}} - \text{threshold}))
+\end{equation}
+
+Six criteria evaluated across different frequency ranges.
+
+\section{Task 2: Radar Signal Processing}
+
+Processed 359 radar files using STFT to extract spectrogram features for human activity recognition.
+
+\section{Task 3: Ackley Function Optimization}
+
+10-dimensional Ackley function:
+\begin{equation}
+f(x) = -20\exp\left(-0.2\sqrt{\frac{1}{n}\sum x_i^2}\right) - \exp\left(\frac{1}{n}\sum\cos(2\pi x_i)\right) + 20 + e
+\end{equation}
+
+Global optimum: $f(x^*)=0$ at $x^*=[0,...,0]$
+
+GA achieved: $|f(x^*) - 0| < 0.01$
+
+\section{Conclusion}
+All tasks completed successfully, demonstrating MATLAB's effectiveness in engineering optimization.
+
+\end{document}

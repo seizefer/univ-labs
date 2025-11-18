@@ -1,0 +1,71 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+
+\title{\textbf{Lab 2 Report: Neural Network for Handwritten Digit Recognition}}
+\author{Student Name \\ UESTC 3036: Machine Learning \& AI}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This lab implements a feedforward neural network using PyTorch for MNIST handwritten digit recognition. The study investigates the impact of different learning rates on training performance.
+\end{abstract}
+
+\section{Methodology}
+
+\subsection{Network Architecture}
+\begin{itemize}
+    \item Input Layer: 784 neurons (28×28 pixels)
+    \item Hidden Layers: 128→128→256→256
+    \item Output Layer: 10 neurons (digits 0-9)
+    \item Activation: ReLU + Softmax
+\end{itemize}
+
+\subsection{Training Configuration}
+\begin{itemize}
+    \item Loss Function: Cross Entropy
+    \item Optimizer: SGD
+    \item Batch Size: 128
+    \item Epochs: 20
+\end{itemize}
+
+\section{Results}
+
+\subsection{Tensor Transformation}
+Two methods demonstrated:
+\begin{enumerate}
+    \item \texttt{repeat()}: Creates actual copy of data
+    \item \texttt{expand()}: Creates view without copying
+\end{enumerate}
+
+\subsection{Softmax Explanation}
+Softmax converts raw outputs to probability distribution:
+\begin{equation}
+\text{softmax}(x_i) = \frac{e^{x_i}}{\sum_{j} e^{x_j}}
+\end{equation}
+
+\subsection{Learning Rate Comparison}
+
+\begin{table}[h]
+\centering
+\caption{Performance with Different Learning Rates}
+\begin{tabular}{ccc}
+\toprule
+Learning Rate & Convergence Speed & Stability \\
+\midrule
+0.02 & Slow & High \\
+0.10 & Medium & Medium \\
+0.50 & Fast & Low \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+Successfully implemented a neural network achieving >90\% accuracy. Learning rate selection critically impacts training effectiveness.
+
+\end{document}

@@ -1,14 +1,38 @@
-% Sum the GUIDs
-guid1 = 2720906;
-guid2 = 2720746;
+% =========================================================================
+% Task 1: 基于GUID计算Caesar密码密钥k
+% =========================================================================
+% 功能说明：
+%   本程序通过两个组员的GUID计算加密密钥k
+%   计算方法：将两个GUID相加，然后反复将各位数字相加，直到结果<=25
+% =========================================================================
+
+% 定义两个组员的GUID
+guid1 = 2720906;  % 第一个组员的GUID
+guid2 = 2720746;  % 第二个组员的GUID
+
+% 步骤1：计算两个GUID的和
 sum_guids = guid1 + guid2;
+disp(['GUID1 + GUID2 = ', num2str(sum_guids)])
 
-% Add all individual digits repeatedly until the result is <= 25
+% 步骤2：将和的各位数字相加
+% 使用arrayfun将数字转换为字符串，再逐位转换为数字并求和
 result = sum(arrayfun(@(x) str2double(x), num2str(sum_guids)));
+disp(['First digit sum = ', num2str(result)])
 
+% 步骤3：如果结果>25，继续将各位数字相加，直到结果<=25
 while result > 25
     result = sum(arrayfun(@(x) str2double(x), num2str(result)));
+    disp(['Continuing digit sum = ', num2str(result)])
 end
 
-k = result; % Resulting key value
+% 最终得到的密钥k
+k = result;
 disp(['The key value k is: ', num2str(k)])
+
+% =========================================================================
+% 计算过程示例：
+% guid1 + guid2 = 2720906 + 2720746 = 5441652
+% 5+4+4+1+6+5+2 = 27 (>25，继续)
+% 2+7 = 9 (<=25，停止)
+% 因此 k = 9
+% =========================================================================

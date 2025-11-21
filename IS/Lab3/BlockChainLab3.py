@@ -1,26 +1,46 @@
+"""
+=========================================================================
+Lab3: 区块链挖矿实现
+=========================================================================
+功能说明：
+    实现完整的工作量证明(PoW)挖矿系统
+    通过调整难度参数来控制挖矿难度
+    验证区块链的完整性和有效性
+
+课程：UESTC4036 Information Security
+实验：Lab 3 - Blockchain Mining
+
+核心概念：
+    - 工作量证明(Proof of Work): 找到满足特定条件的nonce值
+    - 难度(Difficulty): 哈希值前缀需要的0的个数
+    - 链验证: 确保区块链的完整性和一致性
+=========================================================================
+"""
+
 import datetime
 import hashlib
 import json
 
+
 class Blockchain:
     """
-    A Proof of Work (PoW) blockchain implementation with actual mining.
+    带实际挖矿功能的工作量证明(PoW)区块链实现类
 
-    This class creates a chain of blocks, where each block contains transaction data
-    and is linked to the previous block through a hash. New blocks are added through
-    a mining process that requires finding a valid proof of work.
+    这个类创建一个区块链，通过挖矿过程添加新区块。
+    挖矿需要找到一个有效的工作量证明。
 
-    Attributes:
-        chain (list): A list to store the blockchain blocks.
-        difficulty (int): The number of leading zeros required in the block hash for valid PoW.
+    属性：
+        chain (list): 用于存储区块链中所有区块的列表
+        difficulty (int): 区块哈希中前导零的数量要求
     """
 
     def __init__(self, difficulty=4):
         """
-        Initialize the Blockchain with an empty list, create the genesis block, and set difficulty.
+        初始化区块链，创建创世区块并设置难度
 
-        Args:
-            difficulty (int): The number of leading zeros required in the block hash for valid PoW.
+        参数：
+            difficulty (int): 有效PoW所需的前导零数量
+                            难度越高，挖矿时间越长
         """
         self.chain = []
         self.difficulty = difficulty
@@ -28,96 +48,111 @@ class Blockchain:
 
     def create_genesis_block(self):
         """
-        Create the Genesis block and add it to the chain.
+        创建创世区块并添加到链中
 
-        The Genesis block is the first block in the blockchain.
+        创世区块是区块链的第一个区块，不需要挖矿
         """
         genesis_block = self.create_block("Genesis Block", 0)
         self.chain.append(genesis_block)
 
     def create_block(self, data, proof):
         """
-        Create a new block in the blockchain.
+        创建新区块
 
-        Args:
-            data (str): The data to be stored in the block.
-            proof (int): The proof value found during the mining process.
+        参数：
+            data (str): 要存储在区块中的数据
+            proof (int): 挖矿过程中找到的证明值
 
-        Returns:
-            dict: A new block with all required information.
+        返回：
+            dict: 包含所有必要信息的新区块
         """
         block = {
-            'index': len(self.chain),
-            'timestamp': str(datetime.datetime.now()),
-            'data': data,
-            'proof': proof,
+            'index': len(self.chain),  # 区块索引
+            'timestamp': str(datetime.datetime.now()),  # 时间戳
+            'data': data,  # 交易数据
+            'proof': proof,  # 工作量证明（nonce）
+            # 计算前一区块的哈希值，创世区块为'0'
             'previous_hash': self.hash(self.chain[-1]) if self.chain else '0'
         }
         return block
 
     def proof_of_work(self, data):
         """
-        Mine a new block by finding a valid proof of work.
+        挖掘新区块：找到有效的工作量证明
 
-        Args:
-            data (str): The data to be stored in the new block.
+        核心挖矿算法：
+        1. 从proof=0开始
+        2. 创建临时区块
+        3. 检查区块哈希是否满足难度要求
+        4. 如果不满足，proof+1继续尝试
+        5. 找到有效proof后，添加区块到链中
 
-        Returns:
-            dict: The newly mined and added block.
+        参数：
+            data (str): 要存储在新区块中的数据
+
+        返回：
+            dict: 新挖掘并添加的区块
         """
         proof = 0
         while True:
+            # 创建候选区块
             new_block = self.create_block(data, proof)
+            # 检查是否满足难度要求
             if self.is_valid_proof(new_block):
+                # 找到有效证明，添加到链中
                 self.chain.append(new_block)
                 return new_block
+            # 继续尝试下一个proof值
             proof += 1
 
     def is_valid_proof(self, block):
         """
-        Check if a block's hash meets the difficulty requirement.
+        检查区块的哈希是否满足难度要求
 
-        Args:
-            block (dict): The block to check.
+        难度要求：哈希值必须以指定数量的0开头
+        例如：difficulty=4 要求哈希值以"0000"开头
 
-        Returns:
-            bool: True if the block's hash meets the difficulty requirement, False otherwise.
+        参数：
+            block (dict): 要检查的区块
+
+        返回：
+            bool: 如果区块哈希满足难度要求返回True
         """
         block_hash = self.hash(block)
+        # 检查哈希值是否以足够多的0开头
         return block_hash.startswith('0' * self.difficulty)
 
     @staticmethod
     def hash(block):
         """
-        Create a SHA-256 hash of a block.
+        创建区块的SHA-256哈希值
 
-        Args:
-            block (dict): Block to be hashed.
+        参数：
+            block (dict): 要哈希的区块
 
-        Returns:
-            str: The hexadecimal string of the block's hash.
+        返回：
+            str: 区块哈希值的十六进制字符串
         """
+        # 将区块转换为JSON字符串并编码
         block_string = json.dumps(block, sort_keys=True).encode()
+        # 计算并返回SHA-256哈希值
         return hashlib.sha256(block_string).hexdigest()
 
     def get_previous_block(self):
         """
-        Get the last block in the blockchain.
+        获取链中的最后一个区块
 
-        Returns:
-            dict: The last block in the chain.
+        返回：
+            dict: 链中的最后一个区块
         """
         return self.chain[-1]
 
     def print_block(self, index):
         """
-        Print the block information for a given index.
+        打印指定索引的区块信息
 
-        Args:
-            index (int): The index of the block to print.
-
-        Returns:
-            None
+        参数：
+            index (int): 要打印的区块索引
         """
         if 0 <= index < len(self.chain):
             block = self.chain[index]
@@ -129,58 +164,122 @@ class Blockchain:
             print(f"  Current Hash: {self.hash(block)}")
         else:
             print(f"Block {index} does not exist.")
-            
+
     def is_chain_valid(self):
         """
-        Verify the validity of the entire blockchain
-        
-        Returns:
-            bool: True if the blockchain is valid, False otherwise
+        验证整个区块链的有效性
+
+        验证内容：
+        1. 每个区块的previous_hash是否等于前一区块的实际哈希
+        2. 每个区块是否满足工作量证明要求
+
+        返回：
+            bool: 如果区块链有效返回True，否则返回False
         """
+        # 从第二个区块开始遍历（索引1）
         for i in range(1, len(self.chain)):
             current_block = self.chain[i]
-            previous_block = self.chain[i-1]
-            
-            # Verify that the previous hash of the current block is correct
+            previous_block = self.chain[i - 1]
+
+            # 验证1：检查当前区块的previous_hash是否正确
             if current_block['previous_hash'] != self.hash(previous_block):
+                print(f"Invalid: Block {i} has incorrect previous_hash")
                 return False
-                
-            # Verify proof of workload for the current block
+
+            # 验证2：检查当前区块是否满足工作量证明
             if not self.is_valid_proof(current_block):
+                print(f"Invalid: Block {i} does not meet difficulty requirement")
                 return False
-                
+
         return True
 
+
 def mine_new_blocks(blockchain):
-    # Mine two blocks
+    """
+    挖掘新区块的演示函数
+
+    参数：
+        blockchain: 区块链实例
+    """
+    print("Mining blocks... (this may take a moment)")
+    print()
+
+    # 挖掘两个区块
     block1 = blockchain.proof_of_work("Transaction: A -> B 0.5 bitcoin")
+    print(f"Block 1 mined with proof: {block1['proof']}")
+
     block2 = blockchain.proof_of_work("Transaction: B -> C 0.3 bitcoin")
-    
-    # Print all blocks
+    print(f"Block 2 mined with proof: {block2['proof']}")
+    print()
+
+    # 打印所有区块
+    print("=== All Blocks in Chain ===")
     for i in range(len(blockchain.chain)):
         blockchain.print_block(i)
+        print()
+
 
 def main():
     """
-    Main function to demonstrate the Blockchain class functionality with mining.
+    主函数：演示带挖矿功能的区块链
 
-    Creates an instance of the Blockchain class, mines new blocks, and prints information about them.
+    创建区块链实例，挖掘新区块，并验证区块链有效性
     """
-    # Create a new blockchain instance with difficulty 4
+    print("=" * 60)
+    print("Blockchain Mining Demo")
+    print("=" * 60)
+    print()
+
+    # 创建难度为4的区块链实例
+    # 难度4意味着哈希值需要以"0000"开头
     blockchain = Blockchain(difficulty=4)
-    
-    # Demonstrate mining new blocks
+    print(f"Blockchain created with difficulty: {blockchain.difficulty}")
+    print()
+
+    # 演示挖掘新区块
     mine_new_blocks(blockchain)
-    
-    # Verify the blockchain
+
+    # 验证区块链
     is_valid = blockchain.is_chain_valid()
-    print(f"\nBlockchain validation result: {'Effective' if is_valid else 'Ineffective'}")
-    
-    # Demonstrate getting the previous block
+    print("=" * 60)
+    print(f"Blockchain validation result: {'Valid' if is_valid else 'Invalid'}")
+    print("=" * 60)
+    print()
+
+    # 演示获取前一区块
     previous_block = blockchain.get_previous_block()
-    print("\nPrevious (last) block:")
-    print(previous_block)
+    print("Previous (last) block:")
+    print(f"  Index: {previous_block['index']}")
+    print(f"  Data: {previous_block['data']}")
+    print(f"  Proof: {previous_block['proof']}")
 
 
 if __name__ == "__main__":
     main()
+
+
+# =========================================================================
+# 学习心得与反思
+# =========================================================================
+"""
+通过本实验，我对工作量证明(PoW)共识机制有了深刻的理解：
+
+1. 挖矿的本质：挖矿就是不断尝试不同的nonce值，直到找到一个使区块哈希
+   满足难度要求的值。这个过程需要大量计算，但验证却很简单。
+
+2. 难度的意义：difficulty参数控制了挖矿的难度。每增加1，平均需要的
+   尝试次数就增加16倍（因为每个十六进制位有16种可能）。
+
+3. 安全性保证：
+   - 修改任何区块数据都会改变其哈希值
+   - 这会导致后续所有区块的previous_hash失效
+   - 攻击者需要重新挖掘所有后续区块，这在计算上几乎不可能
+
+4. 去中心化共识：多个节点同时挖矿，最先找到有效proof的节点广播区块，
+   其他节点验证后接受。这就是区块链实现去中心化共识的方式。
+
+下一步学习方向：
+- 权益证明(PoS)等更环保的共识算法
+- 智能合约和去中心化应用(DApp)
+- 区块链在供应链、投票等领域的应用
+"""

@@ -1,0 +1,340 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red}
+}
+
+\title{Information Security Laboratory Report\\
+\large UESTC4036: Classical Cryptography and Blockchain Implementation}
+\author{Student Report}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report presents the implementation and analysis of three laboratory sessions covering classical cryptography techniques and blockchain technology. Lab 1 focuses on Caesar cipher encryption, brute-force decryption, frequency analysis, and Playfair matrix generation using MATLAB and Python. Lab 2 introduces fundamental blockchain concepts with hash-linked blocks. Lab 3 extends the blockchain implementation with Proof of Work (PoW) mining mechanism. All implementations include comprehensive documentation and demonstrate key security principles.
+\end{abstract}
+
+\section{Introduction}
+
+Information security relies on both classical cryptographic principles and modern distributed ledger technologies. This laboratory series explores these foundations through hands-on implementation.
+
+\subsection{Objectives}
+\begin{itemize}
+    \item Implement and analyze Caesar cipher encryption and decryption
+    \item Understand cryptanalysis through brute-force and frequency analysis
+    \item Build a functional blockchain with hash linking
+    \item Implement Proof of Work consensus mechanism
+\end{itemize}
+
+\section{Lab 1: Classical Cryptography}
+
+\subsection{Task 1: Key Generation from GUIDs}
+
+The encryption key $k$ is derived from two student GUIDs using iterative digit summation:
+
+\begin{equation}
+k = \text{DigitSum}(\text{GUID}_1 + \text{GUID}_2) \quad \text{where} \quad k \leq 25
+\end{equation}
+
+For GUIDs 2720906 and 2720746:
+\begin{align*}
+\text{Sum} &= 2720906 + 2720746 = 5441652 \\
+\text{Digit Sum} &= 5+4+4+1+6+5+2 = 27 \\
+\text{Final} &= 2+7 = 9
+\end{align*}
+
+Therefore, $k = 9$.
+
+\subsection{Task 2: Caesar Cipher Implementation}
+
+\subsubsection{Encryption Algorithm}
+The Caesar cipher encrypts plaintext using the formula:
+\begin{equation}
+C = E(k, p) = (p + k) \mod 26
+\end{equation}
+
+where $p$ is the plaintext letter (0-25) and $C$ is the ciphertext letter.
+
+\subsubsection{Brute-Force Decryption}
+Decryption attempts all possible keys ($k = 0, 1, ..., 25$):
+\begin{equation}
+p = D(k, C) = (C - k) \mod 26
+\end{equation}
+
+\begin{table}[h]
+\centering
+\caption{Sample Brute-Force Results (Partial)}
+\begin{tabular}{cl}
+\toprule
+Key $k$ & Decrypted Text \\
+\midrule
+7 & vjku ku c ugetgv oguucig \\
+8 & uijt jt b tfdsfu nfttbhf \\
+\textbf{9} & \textbf{this is a secret message} \\
+10 & sghr hr z rdbqds ldrrzfd \\
+\bottomrule
+\end{tabular}
+\label{tab:bruteforce}
+\end{table}
+
+\subsection{Task 3: Frequency Analysis}
+
+Frequency analysis exploits the statistical properties of natural language. In English, the letter 'e' appears with approximately 12.7\% frequency.
+
+\subsubsection{Algorithm}
+\begin{enumerate}
+    \item Count letter frequencies in ciphertext
+    \item Identify the most frequent letter $f_{max}$
+    \item Estimate key: $k_{est} = (f_{max} - \text{'e'}) \mod 26$
+    \item Decrypt using estimated key
+\end{enumerate}
+
+\subsubsection{Results}
+The frequency analysis successfully identified $k = 9$ for the test plaintext containing abundant 'e' letters.
+
+\subsection{Task 4: Playfair Matrix Generation}
+
+The Playfair cipher uses a 5×5 matrix constructed from a keyword. The algorithm:
+
+\begin{enumerate}
+    \item Convert keyword to uppercase, remove duplicates
+    \item Replace 'J' with 'I' (combining into single cell)
+    \item Fill matrix with keyword letters first
+    \item Complete with remaining alphabet letters
+\end{enumerate}
+
+\begin{table}[h]
+\centering
+\caption{Playfair Matrix for Keyword "Security"}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+S & E & C & U & R \\
+\hline
+I & T & Y & A & B \\
+\hline
+D & F & G & H & K \\
+\hline
+L & M & N & O & P \\
+\hline
+Q & V & W & X & Z \\
+\hline
+\end{tabular}
+\label{tab:playfair}
+\end{table}
+
+\section{Lab 2: Blockchain Fundamentals}
+
+\subsection{Block Structure}
+
+Each block in the blockchain contains:
+
+\begin{lstlisting}[language=Python, caption=Block Data Structure]
+block = {
+    'index': len(chain),
+    'timestamp': str(datetime.now()),
+    'data': data,
+    'proof': proof,
+    'previous_hash': previous_hash
+}
+\end{lstlisting}
+
+\subsection{Hash Function Implementation}
+
+The SHA-256 hash function ensures data integrity:
+
+\begin{equation}
+H(B) = \text{SHA256}(\text{JSON}(B))
+\end{equation}
+
+where $B$ represents the block data. Any modification to block data results in a completely different hash value.
+
+\subsection{Chain Linking}
+
+Blocks are linked through the \texttt{previous\_hash} field:
+
+\begin{equation}
+B_n.\text{previous\_hash} = H(B_{n-1})
+\end{equation}
+
+This creates an immutable chain where modifying any block invalidates all subsequent blocks.
+
+\section{Lab 3: Proof of Work Mining}
+
+\subsection{Mining Algorithm}
+
+The Proof of Work mechanism requires finding a nonce (proof) that satisfies:
+
+\begin{equation}
+H(B) < T
+\end{equation}
+
+where $T$ is the target threshold determined by difficulty $d$. In practice, we require the hash to start with $d$ leading zeros.
+
+\subsubsection{Implementation}
+\begin{lstlisting}[language=Python, caption=Proof of Work Algorithm]
+def proof_of_work(self, data):
+    proof = 0
+    while True:
+        block = self.create_block(data, proof)
+        if self.is_valid_proof(block):
+            self.chain.append(block)
+            return block
+        proof += 1
+\end{lstlisting}
+
+\subsection{Difficulty Analysis}
+
+With difficulty $d$, the expected number of attempts is:
+\begin{equation}
+E[\text{attempts}] = 16^d
+\end{equation}
+
+For $d = 4$, approximately 65,536 attempts are needed on average.
+
+\subsection{Chain Validation}
+
+The validation algorithm verifies:
+\begin{enumerate}
+    \item Each block's \texttt{previous\_hash} matches the actual hash of the previous block
+    \item Each block's hash satisfies the difficulty requirement
+\end{enumerate}
+
+\begin{equation}
+\text{Valid}(B_i) = \begin{cases}
+\text{True} & \text{if } B_i.\text{prev\_hash} = H(B_{i-1}) \land H(B_i) \text{ starts with } d \text{ zeros} \\
+\text{False} & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\section{Results and Discussion}
+
+\subsection{Cryptography Results}
+
+\begin{table}[h]
+\centering
+\caption{Caesar Cipher Test Results}
+\begin{tabular}{lll}
+\toprule
+Method & Correct Key Found & Notes \\
+\midrule
+Brute Force & Yes (k=9) & All 26 possibilities tested \\
+Frequency Analysis & Yes (k=9) & Single highest frequency letter \\
+\bottomrule
+\end{tabular}
+\label{tab:crypto_results}
+\end{table}
+
+The frequency analysis method successfully identified the key due to the high occurrence of 'e' in the test text. However, this method may fail with short texts or unusual letter distributions.
+
+\subsection{Blockchain Results}
+
+\begin{table}[h]
+\centering
+\caption{Blockchain Mining Results (Difficulty=4)}
+\begin{tabular}{ccl}
+\toprule
+Block & Proof (Nonce) & Data \\
+\midrule
+0 & 0 & Genesis Block \\
+1 & Variable & Transaction A → B \\
+2 & Variable & Transaction B → C \\
+\bottomrule
+\end{tabular}
+\label{tab:blockchain_results}
+\end{table}
+
+The blockchain successfully demonstrated:
+\begin{itemize}
+    \item Immutable chain linking through hashes
+    \item Proof of Work mining with adjustable difficulty
+    \item Chain validation detecting any tampering
+\end{itemize}
+
+\section{Conclusion}
+
+This laboratory series successfully demonstrated:
+
+\begin{enumerate}
+    \item \textbf{Classical Cryptography}: Caesar cipher's simplicity makes it vulnerable to both brute-force and frequency analysis attacks. Playfair cipher improves security through digraph substitution.
+
+    \item \textbf{Blockchain Technology}: Hash-linked blocks provide data integrity and immutability. The Proof of Work mechanism enables decentralized consensus at the cost of computational resources.
+
+    \item \textbf{Security Principles}: Both cryptography and blockchain rely on mathematical one-way functions (modular arithmetic and hash functions) to ensure security.
+\end{enumerate}
+
+\subsection{Future Work}
+
+\begin{itemize}
+    \item Implement full Playfair encryption/decryption
+    \item Explore alternative consensus mechanisms (Proof of Stake)
+    \item Add network simulation for distributed blockchain
+    \item Implement smart contract functionality
+\end{itemize}
+
+\section*{References}
+
+\begin{enumerate}
+    \item Stallings, W. (2017). \textit{Cryptography and Network Security: Principles and Practice}. Pearson.
+    \item Narayanan, A., et al. (2016). \textit{Bitcoin and Cryptocurrency Technologies}. Princeton University Press.
+    \item Python Documentation. (2024). \textit{hashlib — Secure hashes and message digests}. https://docs.python.org/3/library/hashlib.html
+\end{enumerate}
+
+\appendix
+
+\section{File Structure}
+
+\begin{verbatim}
+IS/
+├── Lab1/
+│   ├── t1.m, t1.py    (Key Generation)
+│   ├── t2.m, t2.py    (Caesar Cipher)
+│   ├── t3.m, t3.py    (Frequency Analysis)
+│   └── t4.m, t4.py    (Playfair Matrix)
+├── Lab2/
+│   ├── Task1.py       (Simple Blockchain)
+│   └── blockchain.py  (Hash-linked Blockchain)
+└── Lab3/
+    └── BlockChainLab3.py (PoW Mining)
+\end{verbatim}
+
+\section{Execution Instructions}
+
+\subsection{MATLAB}
+\begin{lstlisting}[language=Matlab]
+>> run('t1.m')
+>> run('t2.m')
+>> run('t3.m')
+>> run('t4.m')
+\end{lstlisting}
+
+\subsection{Python}
+\begin{lstlisting}[language=bash]
+python IS/Lab1/t1.py
+python IS/Lab1/t2.py
+python IS/Lab1/t3.py
+python IS/Lab1/t4.py
+python IS/Lab2/Task1.py
+python IS/Lab2/blockchain.py
+python IS/Lab3/BlockChainLab3.py
+\end{lstlisting}
+
+\end{document}

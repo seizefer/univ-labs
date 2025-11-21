@@ -1,62 +1,62 @@
-%% MATLAB Based Design Exercise - Hybrid Energy Storage System
-% Course: UESTC4003 - Control
-% This script simulates a wind turbine + battery + super-capacitor system
-% for grid stability control
+%% MATLAB 设计练习 - 混合储能系统
+% 课程: UESTC4003 - 控制
+% 本脚本模拟风力发电机 + 电池 + 超级电容器系统
+% 用于电网稳定性控制
 
 clear; clc; close all;
 
-%% Load Wind Power Data
+%% 加载风力发电数据
 fprintf('Loading wind power data...\n');
 data = readtable('gridwatch wind data.csv');
-wind_power = data.wind;  % Power in kW
+wind_power = data.wind;  % 功率单位为 kW
 n_samples = length(wind_power);
-dt = 5 * 60;  % 5 minutes in seconds
-time = (0:n_samples-1) * dt;  % Time in seconds
-time_hours = time / 3600;  % Time in hours
+dt = 5 * 60;  % 5分钟转换为秒
+time = (0:n_samples-1) * dt;  % 时间单位为秒
+time_hours = time / 3600;  % 时间单位为小时
 
-%% System Parameters
-% Load parameters
-P_load_constant = 450;  % Constant load in kW
-P_load_disturbance = 750;  % Disturbance load in kW
+%% 系统参数设置
+% 负载参数
+P_load_constant = 450;  % 恒定负载 kW
+P_load_disturbance = 750;  % 扰动负载 kW
 
-% Battery parameters (optimized through trial-and-error)
-battery_params.capacity = 500;  % kWh
-battery_params.max_power = 300;  % kW (max charge/discharge rate)
-battery_params.efficiency = 0.95;  % Charge/discharge efficiency
-battery_params.initial_soc = 0.5;  % Initial state of charge (50%)
-battery_params.soc_min = 0.2;  % Minimum SOC
-battery_params.soc_max = 0.9;  % Maximum SOC
-battery_params.voltage = 400;  % Nominal voltage (V)
+% 电池参数（通过试错法优化）
+battery_params.capacity = 500;  % 容量 kWh
+battery_params.max_power = 300;  % 最大充放电功率 kW
+battery_params.efficiency = 0.95;  % 充放电效率
+battery_params.initial_soc = 0.5;  % 初始荷电状态 50%
+battery_params.soc_min = 0.2;  % 最小 SOC
+battery_params.soc_max = 0.9;  % 最大 SOC
+battery_params.voltage = 400;  % 标称电压 V
 
-% Super-capacitor parameters (optimized through trial-and-error)
-sc_params.capacitance = 100;  % Farads
-sc_params.max_power = 500;  % kW (high power for transient response)
-sc_params.voltage_max = 800;  % Maximum voltage (V)
-sc_params.voltage_min = 400;  % Minimum voltage (V)
-sc_params.esr = 0.01;  % Equivalent series resistance (Ohms)
-sc_params.initial_voltage = 600;  % Initial voltage (V)
-sc_params.efficiency = 0.98;  % Higher efficiency than battery
+% 超级电容器参数（通过试错法优化）
+sc_params.capacitance = 100;  % 电容量 F
+sc_params.max_power = 500;  % 最大功率 kW（用于瞬态响应）
+sc_params.voltage_max = 800;  % 最大电压 V
+sc_params.voltage_min = 400;  % 最小电压 V
+sc_params.esr = 0.01;  % 等效串联电阻 Ohms
+sc_params.initial_voltage = 600;  % 初始电压 V
+sc_params.efficiency = 0.98;  % 效率高于电池
 
-%% Case 1: Constant Load Simulation
+%% 案例1：恒定负载仿真
 fprintf('\n=== Case 1: Constant Load (450 kW) ===\n');
 
-% Initialize battery state
+% 初始化电池状态
 battery_soc = zeros(n_samples, 1);
 battery_power = zeros(n_samples, 1);
 battery_energy = zeros(n_samples, 1);
 battery_soc(1) = battery_params.initial_soc;
 battery_energy(1) = battery_params.capacity * battery_soc(1);
 
-% Power balance for constant load
+% 恒定负载的功率平衡
 P_load = P_load_constant * ones(n_samples, 1);
-P_net = wind_power - P_load;  % Positive = excess, Negative = deficit
+P_net = wind_power - P_load;  % 正值=过剩，负值=不足
 
-% Simulate battery operation
+% 模拟电池运行
 for i = 2:n_samples
-    % Determine required battery power
-    P_required = -P_net(i);  % Positive = discharge, Negative = charge
+    % 确定所需电池功率
+    P_required = -P_net(i);  % 正值=放电，负值=充电
 
-    % Apply battery constraints
+    % 应用电池约束
     [P_actual, new_soc, new_energy] = battery_model(...
         P_required, battery_soc(i-1), battery_energy(i-1), ...
         battery_params, dt);
@@ -66,7 +66,7 @@ for i = 2:n_samples
     battery_energy(i) = new_energy;
 end
 
-% Store Case 1 results
+% 保存案例1结果
 case1.time = time_hours;
 case1.wind_power = wind_power;
 case1.load_power = P_load;
@@ -75,7 +75,7 @@ case1.battery_soc = battery_soc;
 case1.battery_energy = battery_energy;
 case1.net_power = P_net;
 
-% Calculate Case 1 statistics
+% 计算案例1统计数据
 case1.avg_wind = mean(wind_power);
 case1.max_battery_discharge = max(battery_power);
 case1.min_battery_charge = min(battery_power);
@@ -87,25 +87,24 @@ fprintf('Battery SOC range: [%.2f%%, %.2f%%]\n', ...
 fprintf('Max discharge: %.2f kW, Max charge: %.2f kW\n', ...
     case1.max_battery_discharge, -case1.min_battery_charge);
 
-%% Case 2: Load with Disturbance Simulation
+%% 案例2：带扰动的负载仿真
 fprintf('\n=== Case 2: Load with Disturbance ===\n');
 
-% Create load profile with disturbance at mid-day
+% 创建带中午扰动的负载曲线
 P_load_case2 = P_load_constant * ones(n_samples, 1);
 
-% Find mid-day index (approximately 12 hours from start)
-% Data starts at 16:00, so mid-day would be around sample 144 (12:00 next day)
-midday_idx = 144;  % Approximately 12 hours from start
-disturbance_duration = 5 * 60;  % 5 minutes in seconds
+% 找到中午时刻的索引（数据从16:00开始，所以中午大约在第144个采样点）
+midday_idx = 144;
+disturbance_duration = 5 * 60;  % 5分钟转换为秒
 n_disturbance_samples = round(disturbance_duration / dt);
 
-% Apply disturbance
+% 应用扰动
 if n_disturbance_samples < 1
     n_disturbance_samples = 1;
 end
 P_load_case2(midday_idx:min(midday_idx+n_disturbance_samples-1, n_samples)) = P_load_disturbance;
 
-% Initialize states for Case 2
+% 初始化案例2的状态变量
 battery_soc2 = zeros(n_samples, 1);
 battery_power2 = zeros(n_samples, 1);
 battery_energy2 = zeros(n_samples, 1);
@@ -116,27 +115,27 @@ sc_energy = zeros(n_samples, 1);
 battery_soc2(1) = battery_params.initial_soc;
 battery_energy2(1) = battery_params.capacity * battery_soc2(1);
 sc_voltage(1) = sc_params.initial_voltage;
-sc_energy(1) = 0.5 * sc_params.capacitance * sc_voltage(1)^2 / 1e6;  % kWh
+sc_energy(1) = 0.5 * sc_params.capacitance * sc_voltage(1)^2 / 1e6;  % 单位 kWh
 
-% Power balance for Case 2
+% 案例2的功率平衡
 P_net2 = wind_power - P_load_case2;
 
-% Simulate hybrid system operation
+% 模拟混合系统运行
 for i = 2:n_samples
-    % Determine required power
-    P_required = -P_net2(i);  % Positive = discharge, Negative = charge
+    % 确定所需功率
+    P_required = -P_net2(i);  % 正值=放电，负值=充电
 
-    % Super-capacitor handles fast transients (high frequency component)
-    % Use high-pass filter approach: SC handles sudden changes
+    % 超级电容器处理快速瞬态（高频分量）
+    % 使用高通滤波方法：超级电容器处理突变
     if i > 1
         P_change = P_required - (-P_net2(i-1));
     else
         P_change = 0;
     end
 
-    % Super-capacitor responds to rapid changes and high power demands
+    % 超级电容器响应快速变化和高功率需求
     if abs(P_change) > 50 || abs(P_required) > battery_params.max_power
-        % Super-capacitor handles the transient
+        % 超级电容器处理瞬态
         P_sc_required = P_change + max(0, abs(P_required) - battery_params.max_power) * sign(P_required);
 
         [P_sc_actual, new_voltage, new_sc_energy] = supercapacitor_model(...
@@ -146,17 +145,17 @@ for i = 2:n_samples
         sc_voltage(i) = new_voltage;
         sc_energy(i) = new_sc_energy;
 
-        % Battery handles the rest
+        % 电池处理剩余部分
         P_battery_required = P_required - P_sc_actual;
     else
-        % Battery handles steady-state
+        % 电池处理稳态
         P_battery_required = P_required;
         sc_power(i) = 0;
         sc_voltage(i) = sc_voltage(i-1);
         sc_energy(i) = sc_energy(i-1);
     end
 
-    % Apply battery model
+    % 应用电池模型
     [P_bat_actual, new_soc, new_energy] = battery_model(...
         P_battery_required, battery_soc2(i-1), battery_energy2(i-1), ...
         battery_params, dt);
@@ -166,7 +165,7 @@ for i = 2:n_samples
     battery_energy2(i) = new_energy;
 end
 
-% Store Case 2 results
+% 保存案例2结果
 case2.time = time_hours;
 case2.wind_power = wind_power;
 case2.load_power = P_load_case2;
@@ -178,9 +177,9 @@ case2.sc_voltage = sc_voltage;
 case2.sc_energy = sc_energy;
 case2.net_power = P_net2;
 
-% Calculate Case 2 statistics
+% 计算案例2统计数据
 case2.max_sc_power = max(abs(sc_power));
-case2.sc_response_time = dt;  % Response within one time step
+case2.sc_response_time = dt;  % 在一个时间步内响应
 case2.soc_range = [min(battery_soc2), max(battery_soc2)];
 
 fprintf('Max SC power: %.2f kW\n', case2.max_sc_power);
@@ -188,10 +187,10 @@ fprintf('SC response time: %.1f seconds\n', case2.sc_response_time);
 fprintf('Battery SOC range: [%.2f%%, %.2f%%]\n', ...
     case2.soc_range(1)*100, case2.soc_range(2)*100);
 
-%% Plot Results
+%% 绘制结果图表
 fprintf('\nGenerating plots...\n');
 
-% Figure 1: Case 1 - Constant Load Results
+% 图1：案例1 - 恒定负载结果
 figure('Name', 'Case 1: Constant Load', 'Position', [100, 100, 1200, 800]);
 
 subplot(3,2,1);
@@ -236,7 +235,7 @@ title('Battery Stored Energy');
 grid on;
 
 subplot(3,2,6);
-% Power balance verification
+% 功率平衡验证
 P_balance = wind_power - P_load - battery_power;
 plot(time_hours, P_balance, 'k-', 'LineWidth', 1.5);
 xlabel('Time (hours)');
@@ -247,7 +246,7 @@ grid on;
 saveas(gcf, 'case1_constant_load.png');
 saveas(gcf, 'case1_constant_load.fig');
 
-% Figure 2: Case 2 - Load with Disturbance Results
+% 图2：案例2 - 带扰动负载结果
 figure('Name', 'Case 2: Load with Disturbance', 'Position', [150, 100, 1200, 900]);
 
 subplot(4,2,1);
@@ -307,7 +306,7 @@ title('Super-capacitor Stored Energy');
 grid on;
 
 subplot(4,2,8);
-% Zoomed view around disturbance
+% 扰动附近的放大视图
 dist_start = max(1, midday_idx - 10);
 dist_end = min(n_samples, midday_idx + 15);
 zoom_time = time_hours(dist_start:dist_end);
@@ -324,7 +323,7 @@ grid on;
 saveas(gcf, 'case2_disturbance.png');
 saveas(gcf, 'case2_disturbance.fig');
 
-% Figure 3: System Comparison
+% 图3：系统比较
 figure('Name', 'System Comparison', 'Position', [200, 100, 1000, 600]);
 
 subplot(2,2,1);
@@ -353,7 +352,7 @@ title('Net Power Distribution');
 grid on;
 
 subplot(2,2,4);
-% Energy flow summary
+% 能量流总结
 categories = {'Wind Gen', 'Load', 'Battery', 'SC'};
 case1_energy = [sum(wind_power)*dt/3600, sum(P_load)*dt/3600, ...
     sum(abs(battery_power))*dt/3600, 0];
@@ -369,10 +368,10 @@ grid on;
 saveas(gcf, 'system_comparison.png');
 saveas(gcf, 'system_comparison.fig');
 
-%% Save Results for Python Analysis
+%% 保存结果用于Python分析
 fprintf('\nSaving results for analysis...\n');
 
-% Save to CSV for Python processing
+% 保存为CSV供Python处理
 results_table = table(time_hours', wind_power, P_load, battery_power, ...
     battery_soc, P_load_case2, battery_power2, battery_soc2, ...
     sc_power, sc_voltage, ...
@@ -381,7 +380,7 @@ results_table = table(time_hours', wind_power, P_load, battery_power, ...
     'battery_power_case2', 'battery_soc_case2', 'sc_power', 'sc_voltage'});
 writetable(results_table, 'simulation_results.csv');
 
-% Save parameters
+% 保存参数
 params_struct.battery = battery_params;
 params_struct.supercapacitor = sc_params;
 params_struct.load_constant = P_load_constant;
